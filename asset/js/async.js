@@ -1,0 +1,257 @@
+// // 非同期関数の宣言
+// async function asyncFunction() {
+// 	return 'hello';
+// }
+
+// asyncFunction().then((returnVal) => {
+// 	console.log(returnVal);
+// });
+
+
+// // awaitはresolveの値を取り出す
+// const prom = new Promise(resolve => {
+// 	setTimeout(() => resolve('この値を取り出します'), 1000)
+// });
+
+// async function asyncFunction() {
+// 	const val = await prom;
+// 	console.log(val);
+// }
+
+// asyncFunction();
+
+// // Promiseがrejectedになった場合
+// async function throwError() {
+// 	try {
+// 		await Promise.reject('Promiseが失敗しました');
+// 	} catch(error) {
+// 		console.log(error);
+// 	}
+// }
+
+// throwError();
+
+// fetch()
+
+
+/**
+ * 犬の画像を取得
+ */
+// async functionで非同期関数を定義
+async function getImgFunction() {
+	const btn = document.getElementById('dogbtn');
+	const container = document.getElementById('dogcontainer');
+
+	try {
+		// 連打防止：通信開始時にボタンを無効化
+		btn.disabled = true;
+		btn.textContent = '読み込み中...';
+
+		// const response = await fetch('./asset/image/sample.jpeg');
+		const response = await fetch('https://dog.ceo/api/breeds/image/random');
+
+		if (!response.ok) throw new Error('画像が見つかりません');
+		// console.log(response);
+
+		// responseオブジェクトからバイナリデータとして読み込む
+		// const blob = await response.blob();
+
+		// jsonデータとして読み込む
+		const res = await response.json();
+		const imgUrl = res.message;
+		// console.log(imgUrl);
+
+		// img要素を生成
+		const img = document.createElement('img');
+		// img.src = URL.createObjectURL(blob);
+		img.src = imgUrl;
+		// console.log(img.src);
+		
+		img.style.width = '300px';
+		img.style.display = 'block';
+
+		// 中身を空にしてから、画像を追加
+		container.innerHTML = '';
+		container.appendChild(img);
+
+		console.log('成功', img.src);
+	} catch(error) {
+		alert('エラー：' + error.message);
+		console.error('エラーが発生しました', error);
+	} finally {
+		// 通信終了時にボタンを元に戻す
+		btn.disabled = false;
+		btn.textContent = '犬を見る';
+	}
+}
+
+const dogBtn = document.getElementById('dogbtn');
+dogBtn.addEventListener('click', getImgFunction)
+
+
+let allPosts = [];
+const container = document.getElementById('post-container');
+const searchInput = document.getElementById('search-input');
+const resetBtn = document.getElementById('reset-btn');
+
+/**
+ * 投稿一覧を取得
+ * @returns 
+ */
+async function fetchPosts() {
+	const btn = document.getElementById('postbtn');
+	if (!btn || !container) return;
+
+	try {
+		btn.disabled = true;
+		btn.textContent = '読み込み中...';
+
+		const response = await fetch('https://jsonplaceholder.typicode.com/posts');
+
+		if (!response.ok) {
+			throw new Error(`HTTP error! status: ${response.status}`);
+		}
+
+		const res = await response.json();
+
+		// console.log(res);
+		// console.log(`取得件数：${ res.length }件`);
+
+		// 取得結果をグローバル変数に入れる
+		allPosts = res;
+
+		displayPosts(allPosts, '');
+
+		// // container.innerHTML = '';
+
+		// // const postList = document.createElement('ul');
+		// // container.appendChild(postList)
+		// let htmlContent = '<ul class="post-list">';
+
+		// data.forEach(post => {
+		// 	// const postItem = document.createElement('li');
+		// 	// postItem.className = 'post-item'
+		// 	// postList.appendChild(postItem)
+
+		// 	// const titleEL = document.createElement('h3');
+		// 	// titleEL.className = 'post-title';
+		// 	// titleEL.textContent = post.title;
+		// 	// postItem.appendChild(titleEL)
+
+		// 	// const bodyEL = document.createElement('p');
+		// 	// bodyEL.className = 'post-body';
+		// 	// bodyEL.textContent = post.body;
+		// 	// postItem.appendChild(bodyEL);
+
+		// 	htmlContent += `
+		// 		<li class="post-item">
+		// 			<h3 class="post-title">${escapeHTML(post.title)}</h3>
+		// 			<p class="post-body">${escapeHTML(post.body)}</p>
+		// 		</li>
+		// 	`;
+		// });
+
+		// htmlContent += '</ul>';
+
+		// container.innerHTML = htmlContent;
+		
+	} catch(error) {
+		console.error('Data fetch failed:', error);
+		alert('エラーが発生しました。時間を置いて再度お試しください。');
+	} finally {
+		btn.disabled = false;
+		btn.textContent = '投稿を見る';
+	}
+}
+
+// inputイベントで1文字打つたびに検索が走る
+// (e)はeventの略、発生したイベントに対してデータが入ったオブジェクトを自動的に作成して関数に渡す
+searchInput.addEventListener('input', (e) => {
+	const keyword = e.target.value.trim(); // trimで前後の空白を削除
+	const searchKeyword = keyword.toLowerCase(); // 入力された文字（小文字に統一）
+
+	// 検索文字が含まれている箇所を抽出
+	const filteredPosts = allPosts.filter(post => {
+		// キーワードが含まれているかチェック
+		// return post.title.toLowerCase().includes(keyword);
+		const isTitleMatch = post.title.toLowerCase().includes(searchKeyword);
+    const isBodyMatch = post.body.toLowerCase().includes(searchKeyword);
+		return isTitleMatch || isBodyMatch;
+	});
+
+	displayPosts(filteredPosts, keyword);
+});
+
+resetBtn.addEventListener('click', () => {
+	// 検索窓を空にする
+	searchInput.value = '';
+	// 全件表示の戻す
+	displayPosts(allPosts);
+	// 入力欄にフォーカスを戻す
+	searchInput.focus();
+});
+
+/**
+ * 取得した投稿内容を表示
+ * @param {*} posts 
+ */
+function displayPosts(posts, keyword = '') {
+	if (!container) return;
+
+	console.log('displayPosts:', keyword);
+
+	if (posts.length === 0) {
+		container.innerHTML = '<p class="no-results">該当する投稿は見つかりませんでした。</p>';
+		return;
+	} 
+
+	let htmlContent = '<ul class="post-list">';
+	posts.forEach(post => {
+		let title = escapeHTML(post.title);
+		let body = escapeHTML(post.body);
+
+		if (keyword) {
+			// const highlighted = highlightText(title, keyword);
+			// console.log('ハイライト結果:',highlighted);
+			title = highlightText(title, keyword);
+			body = highlightText(body, keyword);
+		}
+
+		htmlContent += `
+			<li class="post-item">
+				<h3 class="post-title">${title}</h3>
+				<p class="post-body">${body}</p>
+			</li>
+		`;
+	});
+	htmlContent += '</ul>';
+
+	container.innerHTML = htmlContent;
+}
+
+function highlightText(text, keyword) {
+	if (!keyword) return text; // 検索語がなければそのまま返す
+
+	// 正規表現を作成（g: 全て置換, i: 大文字小文字を無視）
+	const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	// RegExpで検索文字と正規表現を照合
+	const regex = new RegExp(`(${escapedKeyword})`, 'gi');
+	// $1 はマッチした元の文字を保持
+	return text.replace(regex, '<mark>$1</mark>');
+}
+
+/**
+ * セキュリティ XSS対策
+ * @param {*} str 
+ * @returns 
+ */
+function escapeHTML(str) {
+	return str
+	.replace(/&/g, '&amp;')
+	.replace(/</g, '&lt;')
+	.replace(/>/g, '&gt;')
+	.replace(/"/g, '&quot;')
+	.replace(/'/g, '&#039;');
+}
+
+document.getElementById('postbtn')?.addEventListener('click', fetchPosts);
