@@ -89,17 +89,23 @@ const dogBtn = document.getElementById('dogbtn');
 dogBtn.addEventListener('click', getImgFunction)
 
 
+
+const STORAGE_KEY = 'favorite'
 let allPosts = [];
+
+const postBtn = document.getElementById('postbtn');
 const container = document.getElementById('post-container');
 const searchInput = document.getElementById('search-input');
 const resetBtn = document.getElementById('reset-btn');
+const favBtn = document.getElementsByClassName('fav-btn');
+
 
 /**
  * 投稿一覧を取得
  * @returns 
  */
 async function fetchPosts() {
-	const btn = document.getElementById('postbtn');
+	const btn = postBtn;
 	if (!btn || !container) return;
 
 	try {
@@ -114,7 +120,7 @@ async function fetchPosts() {
 
 		const res = await response.json();
 
-		// console.log(res);
+		console.log(res);
 		// console.log(`取得件数：${ res.length }件`);
 
 		// 取得結果をグローバル変数に入れる
@@ -164,32 +170,16 @@ async function fetchPosts() {
 	}
 }
 
-// inputイベントで1文字打つたびに検索が走る
-// (e)はeventの略、発生したイベントに対してデータが入ったオブジェクトを自動的に作成して関数に渡す
-searchInput.addEventListener('input', (e) => {
-	const keyword = e.target.value.trim(); // trimで前後の空白を削除
-	const searchKeyword = keyword.toLowerCase(); // 入力された文字（小文字に統一）
-
-	// 検索文字が含まれている箇所を抽出
-	const filteredPosts = allPosts.filter(post => {
-		// キーワードが含まれているかチェック
-		// return post.title.toLowerCase().includes(keyword);
-		const isTitleMatch = post.title.toLowerCase().includes(searchKeyword);
-    const isBodyMatch = post.body.toLowerCase().includes(searchKeyword);
-		return isTitleMatch || isBodyMatch;
-	});
-
-	displayPosts(filteredPosts, keyword);
-});
-
-resetBtn.addEventListener('click', () => {
-	// 検索窓を空にする
-	searchInput.value = '';
-	// 全件表示の戻す
-	displayPosts(allPosts);
-	// 入力欄にフォーカスを戻す
-	searchInput.focus();
-});
+/**
+ * localStorageに保存した値を取得し、配列に戻ず
+ * @returns 
+ */
+function getSavedFavs() {
+	// 現在の配列を取り出す
+	const getFav = localStorage.getItem(STORAGE_KEY);
+	// 文字列を配列に戻す
+	return getFav ? JSON.parse(getFav) : [];
+}
 
 /**
  * 取得した投稿内容を表示
@@ -203,7 +193,10 @@ function displayPosts(posts, keyword = '') {
 	if (posts.length === 0) {
 		container.innerHTML = '<p class="no-results">該当する投稿は見つかりませんでした。</p>';
 		return;
-	} 
+	}
+
+	// localStorage.getItemはforEachの外で実行、動作が重くなる
+	const favList = getSavedFavs();
 
 	let htmlContent = '<ul class="post-list">';
 	posts.forEach(post => {
@@ -211,16 +204,19 @@ function displayPosts(posts, keyword = '') {
 		let body = escapeHTML(post.body);
 
 		if (keyword) {
-			// const highlighted = highlightText(title, keyword);
-			// console.log('ハイライト結果:',highlighted);
 			title = highlightText(title, keyword);
 			body = highlightText(body, keyword);
 		}
 
+		const isFav = favList.includes(post.id.toString()); // 数値型
+		const favBtnText = isFav ? 'お気に入り登録済み' : 'お気に入り';
+		const favBtnClass = isFav ? 'fav-btn active' : 'fav-btn';
+
 		htmlContent += `
 			<li class="post-item">
-				<h3 class="post-title">${title}</h3>
-				<p class="post-body">${body}</p>
+				<h3 class="post-title">${ title }</h3>
+				<p class="post-body">${ body }</p>
+				<button class="${ favBtnClass }" data-id="${ post.id }">${ favBtnText }</button>
 			</li>
 		`;
 	});
@@ -229,6 +225,12 @@ function displayPosts(posts, keyword = '') {
 	container.innerHTML = htmlContent;
 }
 
+/**
+ * 検索文字をハイライト
+ * @param {*} text 
+ * @param {*} keyword 
+ * @returns 
+ */
 function highlightText(text, keyword) {
 	if (!keyword) return text; // 検索語がなければそのまま返す
 
@@ -254,4 +256,70 @@ function escapeHTML(str) {
 	.replace(/'/g, '&#039;');
 }
 
-document.getElementById('postbtn')?.addEventListener('click', fetchPosts);
+// inputイベントで1文字打つたびに検索が走る
+// (e)はeventの略、発生したイベントに対してデータが入ったオブジェクトを自動的に作成して関数に渡す
+searchInput.addEventListener('input', (e) => {
+	const keyword = e.target.value.trim(); // trimで前後の空白を削除
+	const searchKeyword = keyword.toLowerCase(); // 入力された文字（小文字に統一）
+
+	// 検索文字が含まれている箇所を抽出
+	const filteredPosts = allPosts.filter(post => {
+		// キーワードが含まれているかチェック
+		// return post.title.toLowerCase().includes(keyword);
+		const isTitleMatch = post.title.toLowerCase().includes(searchKeyword);
+    const isBodyMatch = post.body.toLowerCase().includes(searchKeyword);
+		return isTitleMatch || isBodyMatch;
+	});
+
+	displayPosts(filteredPosts, keyword);
+});
+
+// resetボタン
+resetBtn.addEventListener('click', () => {
+	// 検索窓を空にする
+	searchInput.value = '';
+	// 全件表示の戻す
+	displayPosts(allPosts);
+	// 入力欄にフォーカスを戻す
+	searchInput.focus();
+});
+
+// 投稿表示ボタン
+postBtn.addEventListener('click', () => {
+	fetchPosts();
+});
+
+// お気に入り追加削除機能
+container.addEventListener('click', (e) => {
+	if (!e.target.classList.contains('fav-btn')) return;
+
+	const getPostId = e.target.dataset.id.toString(); // 型を統一
+	console.log('ID:', getPostId);
+
+	let favList = getSavedFavs();
+	console.log('お気に入りリスト：', favList);
+
+	// 配列の中からincludesで条件に合うものをチェック
+	if (favList.includes(getPostId)) {
+		// 取得したIDを除外した新しいIDで配列を上書き
+		favList = favList.filter(id => id !== getPostId);
+		console.log(`ID:${getPostId} を削除`);
+	} else {
+		// 配列に新しいIDを保存
+		favList.push(getPostId);
+		console.log(`ID:${getPostId} を追加`);
+	}
+
+	// 配列を文字列にして保存
+	localStorage.setItem(STORAGE_KEY, JSON.stringify(favList));
+
+	const currentKeyword = searchInput.value.trim();
+
+	const filteredPosts = allPosts.filter(post => {
+		const searchKeyword = currentKeyword.toLowerCase();
+		return post.title.toLowerCase().includes(searchKeyword) || post.body.toLowerCase().includes(searchKeyword);
+	});
+
+	displayPosts(filteredPosts, currentKeyword);
+});
+
