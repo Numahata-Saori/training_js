@@ -127,39 +127,6 @@ async function fetchPosts() {
 		allPosts = res;
 
 		displayPosts(allPosts, '');
-
-		// // container.innerHTML = '';
-
-		// // const postList = document.createElement('ul');
-		// // container.appendChild(postList)
-		// let htmlContent = '<ul class="post-list">';
-
-		// data.forEach(post => {
-		// 	// const postItem = document.createElement('li');
-		// 	// postItem.className = 'post-item'
-		// 	// postList.appendChild(postItem)
-
-		// 	// const titleEL = document.createElement('h3');
-		// 	// titleEL.className = 'post-title';
-		// 	// titleEL.textContent = post.title;
-		// 	// postItem.appendChild(titleEL)
-
-		// 	// const bodyEL = document.createElement('p');
-		// 	// bodyEL.className = 'post-body';
-		// 	// bodyEL.textContent = post.body;
-		// 	// postItem.appendChild(bodyEL);
-
-		// 	htmlContent += `
-		// 		<li class="post-item">
-		// 			<h3 class="post-title">${escapeHTML(post.title)}</h3>
-		// 			<p class="post-body">${escapeHTML(post.body)}</p>
-		// 		</li>
-		// 	`;
-		// });
-
-		// htmlContent += '</ul>';
-
-		// container.innerHTML = htmlContent;
 		
 	} catch(error) {
 		console.error('Data fetch failed:', error);
