@@ -1,5 +1,9 @@
 const key = 'favorite-list';
-let postsBox = [];
+const state = {
+	allPosts: [],
+	favorites: [],
+	searchKeyword: ''
+};
 
 const postShow = document.getElementById('post-show');
 const postContents = document.getElementById('post-contents');
@@ -30,9 +34,11 @@ async function fetchPosts() {
 		console.log(json); // 確認用
 
 		// 取得結果をグローバル変数に代入
-		postsBox = json;
+		state.allPosts = json;
+		state.favorites = getSaved();
 
-		displayPosts(postsBox, '');
+		render();
+		// displayPosts(state.allPosts, '');
 		changeBtnText(postShow, false, buttonTextGet);
 
 		console.log('get success');
@@ -43,9 +49,9 @@ async function fetchPosts() {
 
 /**
  * ボタンテキストを変更
- * @param {*} btn 
- * @param {*} disabled 
- * @param {*} text 
+ * @param {*} btn ボタン
+ * @param {*} disabled 無効/有効切り替え
+ * @param {*} text ボタンテキスト
  */
 function changeBtnText(btn, disabled, text) {
 	btn.disabled = disabled;
@@ -54,8 +60,8 @@ function changeBtnText(btn, disabled, text) {
 
 /**
  * 取得した投稿を表示
- * @param {*} posts 
- * @param {*} keyword 
+ * @param {*} posts 投稿情報
+ * @param {*} keyword 検索キーワード
  * @returns 
  */
 function displayPosts(posts, keyword = '') {
@@ -65,6 +71,7 @@ function displayPosts(posts, keyword = '') {
 		return;
 	}
 
+	// localStorageのIDを取得
 	const isfav = getSaved();
 
 	// posts.forEach(post => { ... } からmapに置き換え
@@ -121,8 +128,8 @@ function getSaved() {
 // https://minerva.mamansoft.net/Notes/JavaScript%E3%81%A7%E6%AD%A3%E8%A6%8F%E8%A1%A8%E7%8F%BE%E6%96%87%E5%AD%97%E5%88%97%E3%82%92%E3%82%A8%E3%82%B9%E3%82%B1%E3%83%BC%E3%83%97
 /**
  * 検索語句をハイライト
- * @param {*} text 
- * @param {*} keyword 
+ * @param {*} text 投稿情報
+ * @param {*} keyword 検索キーワード
  * @returns 
  */
 function highlightText(text, keyword) {
@@ -131,6 +138,46 @@ function highlightText(text, keyword) {
 	const escapedKeyword = keyword.replace(/[.*+?^=!:${}()|[\]\/\\]/g, '\\$&');
 	const regex = new RegExp(`(${ escapedKeyword })`, 'gi');
 	return text.replace(regex, '<mark>$1</mark>');
+}
+
+/**
+ * キーワードを検索
+ * @param {*} posts 投稿情報
+ * @param {*} keyword 検索キーワード
+ * @returns 
+ */
+function getFilteredPosts(posts, keyword) {
+	const lowKey = keyword.toLowerCase();
+	return posts.filter(p => {
+		return p.title.toLowerCase().includes(lowKey) || p.body.toLowerCase().includes(lowKey);
+	});
+}
+
+/**
+ * 画面に取得した投稿情報を表示
+ */
+function render() {
+	const filtered = getFilteredPosts(state.allPosts, state.searchKeyword);
+	displayPosts(filtered, state.searchKeyword);
+}
+
+/**
+ * お気に入り情報をlocalStorageに追加、削除
+ * @param {*} postId 投稿ID
+ */
+function toggleFavorite(postId) {
+	// localStorageの配列の中からincludesで条件にあうIDをチェック
+	if (state.favorites.includes(postId)) {
+		// 取得したIDを除外し、localStorageに上書き
+		state.favorites = state.favorites.filter(id => id !== postId);
+	} else {
+		// localStorageに追加
+		state.favorites.push(postId);
+	}
+
+	// 文字列をjsonに変換し、localStorageに保存
+	localStorage.setItem(key, JSON.stringify(state.favorites));
+	render();
 }
 
 postShow.addEventListener('click', () => {
@@ -142,41 +189,16 @@ postContents.addEventListener('click', (e) => {
 		const postGetId = e.target.dataset.id.toString();
 		console.log('記事ID：', postGetId); // 確認用
 
-		// localStorageのIDを取得
-		let favGetSaved = getSaved();
+		toggleFavorite(postGetId);
 
-		// localStorageの配列の中からincludesで条件にあうIDをチェック
-		if (favGetSaved.includes(postGetId)) {
-			// 取得したIDを除外し、localStorageに上書き
-			favGetSaved = favGetSaved.filter(id => id !== postGetId);
-			console.log(`記事ID：${ postGetId } 削除`);
-		} else {
-			// localStorageに追加
-			favGetSaved.push(postGetId);
-			console.log(`記事ID：${ postGetId } 追加`);
-		}
-
-		// 文字列をjsonに変換し、localStorageに保存
-		localStorage.setItem(key, JSON.stringify(favGetSaved));
-
-		const currentKeyword = postSearch.value.trim();
-		const filteredPosts = postsBox.filter(post => {
-			return post.title.toLowerCase().includes(currentKeyword.toLowerCase()) || post.body.toLowerCase().includes(currentKeyword.toLowerCase());
-		});
-
-		displayPosts(filteredPosts, currentKeyword);
 	} else {
 		return;
 	}
 });
 
 postSearch.addEventListener('input', (e) => {
-	const keyword = e.target.value.trim().toLowerCase();
-	console.log(keyword);
+	state.searchKeyword = e.target.value.trim().toLowerCase();
+	console.log(state.searchKeyword);
 
-	const searchPosts = postsBox.filter(post => {
-		return post.title.toLowerCase().includes(keyword) || post.body.toLowerCase().includes(keyword);
-	});
-
-	displayPosts(searchPosts, keyword);
+	render();
 });
