@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Document</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">
+	<link rel="stylesheet" href="./asset/css/vue.css">
+</head>
+
+<body>
+
+  <div class="app-container">
+    <header class="header">
+      <div class="header__contents">
+        <h1>Vue Dev Study</h1>
+        <!-- <nav class="nav">
+          <ul class="nav-list">
+            <li class="nav-list__item" v-for="(_, view) in views" :key="view" :class="[{ active: currentView === view }]">
+              <button @click="currentView = view" class="nav-button">{{ view }}</button>
+            </li>
+          </ul>
+        </nav> -->
+      </div>
+    </header>
+
+    <main class="content-area">
+      <div class="content-area__inner">
+        <h2 class="">Practice</h2>
+
+        <section class="" id="dog-app">
+          <p>{{ message }}</p>
+
+          <div class="common-content dog-app">
+            <h3 class="common-heading">Dog API</h3>
+            <div class="dog-app__button">
+              <button @click=" fetchDog" :disabled="isDogLoading" class="dog-button">{{ isDogLoading ? '読み込み中' : '新しい犬の画像を見る' }}</button>
+            </div>
+
+            <div class="dog-app__display">
+              <p v-if="isDogLoading && dogUrl" class="dog-app__loading">読み込み中...</p>
+              <p v-if="dogError" :class="{ 'is-loading' : isDogLoading }" class="dog-app__error">{{ dogError }}</p>
+              <div v-if="dogUrl" class="dog-app__image">
+                <img :src="dogUrl" alt="dog image">
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="poke-app">
+          <div class="common-content poke-app">
+            <h3 class="common-heading">PokeAPI</h3>
+
+            <div class="poke-app__contents">
+              <div class="poke-app">
+                <input v-model="pokeSearchText" class="poke-app__input" type="text" name="" id="" placeholder="ポケモンの名前を入力">
+              </div>
+              <div v-if="pokeList" class="poke-app__list-contents">
+                <p v-if="pokeError" :class="{ 'is-loading' : isPokeLoading }" class="poke-app__error">{{ pokeError }}</p>
+                <p v-if="isNotFoundPoke" class="poke-app__error">ポケモンが見つかりませんでした</p>
+                <div v-if="pokeFavorites" class="poke-fav">
+                  <h2 class="poke-fav__title">お気に入りリスト</h2>
+                  <ul class="poke-fav__list">
+                    <li v-for="(poke, index) in pokeFavorites" :key="poke.id" class="poke-fav__item">
+                      <p class="poke-fav__image"><img :src="poke.image" :alt="poke.name"></p>
+                    </li>
+                  </ul>
+                </div>
+                <ul class="poke-app__list">
+                  <!-- :key ⇒ indexではなくIDを使う -->
+                  <li v-for="(poke, index) in pokeSearchList" :key="poke.id" class="poke-app__item">
+                    <button @click="toggleFavorite(poke)" :class="isPokeFavorite(poke.id) ? 'active' : ''"><span :class="isPokeFavorite(poke.id) ? 'mdi-heart' : 'mdi-heart-outline'" class="mdi heart-icon"></span></button>
+                    <!-- 図鑑IDを3桁で取得 -->
+                    <p class="poke-app__number">No. {{ String(poke.id).padStart(3, '0') }}</p>
+                    <p class="poke-app__name">{{ poke.nameJa }}<span>({{ poke.nameEn }})</span></p>
+                    <div class="poke-app__image">
+                      <img :src="poke.image" :alt="poke.name">
+                    </div>
+                    <div class="poke-app__type">
+                      タイプ：<span v-for="(type, index) in poke.types" :key="type"><span class="">{{ type }}</span><span v-if="index < poke.types.length - 1"> / </span></span>
+                    </div>
+                    <button @click="openPokeModal(poke)" class="poke-app__button">詳細を見る</button>
+                  </li>
+                </ul>
+                <button @click="fetchMorePoke()" class="poke-app__more">もっと見る</button>
+                <Teleport to="body">
+                  <div v-if="selectedPoke" class="poke-app__modal">
+                    <div class="poke-modal">
+                      <p class="poke-modal__title">{{ selectedPoke.nameJa }}詳細</p>
+                      <div class="poke-modal__image-box">
+                        <p class="poke-modal__image"><img :src="selectedPoke.imageFront" :alt="selectedPoke.name"></p>
+                        <p class="poke-modal__image"><img :src="selectedPoke.imageBack" :alt="selectedPoke.name"></p>
+                        <p class="poke-modal__image"><img :src="selectedPoke.imageShiny" :alt="selectedPoke.name"></p>
+                      </div>
+                      <button @click="closePokeModal" class="poke-app__button">閉じる</button>
+                    </div>
+                  </div>
+                </Teleport>
+              </div>
+            </div>
+          </section>
+        </section>
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer__contents">
+        <p class="copyright">&copy; 2026 Nunamata Saori</p>
+      </div>
+    </footer>
+  </div>
+
+
+
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="asset/js/vue.js"></script>
+
+</body>
+</html>

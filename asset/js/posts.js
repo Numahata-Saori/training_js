@@ -15,7 +15,7 @@ const buttonTextGet = '投稿を取得'
 
 /**
  * API URLから投稿記事データを取得
- * @returns 
+ * @returns
  */
 async function fetchPosts() {
 	if (!postShow && !postContents) return;
@@ -38,7 +38,7 @@ async function fetchPosts() {
 		state.favorites = getSaved();
 
 		render();
-		// displayPosts(state.allPosts, '');
+
 		changeBtnText(postShow, false, buttonTextGet);
 
 		console.log('get success');
@@ -62,7 +62,7 @@ function changeBtnText(btn, disabled, text) {
  * 取得した投稿を表示
  * @param {*} posts 投稿情報
  * @param {*} keyword 検索キーワード
- * @returns 
+ * @returns
  */
 function displayPosts(posts, keyword = '') {
 	if (posts.length === 0) {
@@ -78,7 +78,7 @@ function displayPosts(posts, keyword = '') {
 	const postContentsInner = posts.map(post => {
 		let title = escapeHTML(post.title);
 		let body = escapeHTML(post.body);
-		const favConf = isfav.includes(post.id.toString());
+		const favConf = isfav.includes(post.id.toString()); // 配列にpost.idが存在するか確認
 		const favButtonText = favConf ? 'お気に入り登録済み' : 'お気に入り';
 		const favButtonClass = favConf ? 'fav-button active' : 'fav-button';
 
@@ -101,8 +101,8 @@ function displayPosts(posts, keyword = '') {
 
 /**
  * HTMLエスケープ
- * @param {*} str 
- * @returns 
+ * @param {*} str
+ * @returns
  */
 function escapeHTML(str) {
 	return str
@@ -115,7 +115,7 @@ function escapeHTML(str) {
 
 /**
  * localStorageにあるデータを取得
- * @returns 
+ * @returns
  */
 function getSaved() {
 	// localStorageに保存されているデータを取得
@@ -130,7 +130,7 @@ function getSaved() {
  * 検索語句をハイライト
  * @param {*} text 投稿情報
  * @param {*} keyword 検索キーワード
- * @returns 
+ * @returns
  */
 function highlightText(text, keyword) {
 	if (!keyword) return text;
@@ -144,7 +144,7 @@ function highlightText(text, keyword) {
  * キーワードを検索
  * @param {*} posts 投稿情報
  * @param {*} keyword 検索キーワード
- * @returns 
+ * @returns
  */
 function getFilteredPosts(posts, keyword) {
 	const lowKey = keyword.toLowerCase();
